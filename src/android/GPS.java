@@ -1,8 +1,5 @@
 package com.etrans.cordova.plugin.gps;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.cordova.CordovaActivity;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -20,65 +17,33 @@ import org.apache.cordova.PluginResult;
 
 public class GPS extends CordovaPlugin {
 
+    private Context context;
+    private LocationManager locationManager;
+    private CordovaActivity cordovaActivity;
+
+    public GPS() {
+        context = this.cordova.getActivity().getApplicationContext();
+        locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        cordovaActivity = (CordovaActivity) this.cordova.getActivity();
+    }
+
     private CallbackContext onNewIntentCallbackContext = null;
 
-    //public boolean execute(String action, JSONArray args, String callbackId) {
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) {
-        try {
+//        try {
 
-            if (action.equals("checkGPS")) {
+        if (action.equals("isGPSEnabled")) {
+            actionIsEnableGPS(args, callbackContext);
+            return true;
+        } else if (action.equals("gotoGPSSettings")) {
+            actionGotoGPSSettings(args, callbackContext);
+            return true;
+        } else if (action.equals("checkGPS")) {
+            actionCheckGPS(args, callbackContext);
+            return true;
+        }
 
-                Context context = this.cordova.getActivity().getApplicationContext();
-
-                LocationManager lm = (LocationManager)context.getSystemService(Context.LOCATION_SERVICE);
-                boolean gps_enabled = false;
-//                boolean network_enabled = false;
-
-                try {
-                    gps_enabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
-                } catch(Exception ex) {}
-
-//                try {
-//                    network_enabled = lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-//                } catch(Exception ex) {}
-//
-//                if(!gps_enabled && !network_enabled) {
-//                    // notify user
-//                    AlertDialog.Builder dialog = new AlertDialog.Builder(context);
-//                    dialog.setMessage(context.getResources().getString(R.string.gps_network_not_enabled));
-//                    dialog.setPositiveButton(context.getResources().getString(R.string.open_location_settings), new DialogInterface.OnClickListener() {
-//                        @Override
-//                        public void onClick(DialogInterface paramDialogInterface, int paramInt) {
-//                            // TODO Auto-generated method stub
-//                            Intent myIntent = new Intent( Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-//                            context.startActivity(myIntent);
-//                            //get gps
-//                        }
-//                    });
-//                    dialog.setNegativeButton(context.getString(R.string.Cancel), new DialogInterface.OnClickListener() {
-//
-//                        @Override
-//                        public void onClick(DialogInterface paramDialogInterface, int paramInt) {
-//                            // TODO Auto-generated method stub
-//
-//                        }
-//                    });
-//                    dialog.show();
-//                }
-
-//                if (args.length() != 0) {
-//                    //return new PluginResult(PluginResult.Status.INVALID_ACTION);
-//                    callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.INVALID_ACTION));
-//                    return false;
-//                }
-
-//                Intent i = ((CordovaActivity)this.cordova.getActivity()).getIntent();
-//                String uri = i.getDataString();
-                //return new PluginResult(PluginResult.Status.OK, uri);
-                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, gps_enabled));
-                return true;
-            }
 
 //            if (action.equals("startActivity")) {
 //                if (args.length() != 1) {
@@ -195,16 +160,16 @@ public class GPS extends CordovaPlugin {
 //                return true;
 //            }
 
-            //return new PluginResult(PluginResult.Status.INVALID_ACTION);
-            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.INVALID_ACTION));
-            return false;
-        } catch (JSONException e) {
-            e.printStackTrace();
-            String errorMessage=e.getMessage();
-            //return new PluginResult(PluginResult.Status.JSON_EXCEPTION);
-            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.JSON_EXCEPTION,errorMessage));
-            return false;
-        }
+        //return new PluginResult(PluginResult.Status.INVALID_ACTION);
+        callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.INVALID_ACTION));
+        return false;
+//        } catch (JSONException e) {
+//            e.printStackTrace();
+//            String errorMessage=e.getMessage();
+//            //return new PluginResult(PluginResult.Status.JSON_EXCEPTION);
+//            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.JSON_EXCEPTION,errorMessage));
+//            return false;
+//        }
     }
 //
 //    public static void displayPromptForEnablingGPS(final Activity activity) {
@@ -232,53 +197,57 @@ public class GPS extends CordovaPlugin {
 
     @Override
     public void onNewIntent(Intent intent) {
-    	 
         if (this.onNewIntentCallbackContext != null) {
-        	PluginResult result = new PluginResult(PluginResult.Status.OK, intent.getDataString());
-        	result.setKeepCallback(true);
+            PluginResult result = new PluginResult(PluginResult.Status.OK, intent.getDataString());
+            result.setKeepCallback(true);
             this.onNewIntentCallbackContext.sendPluginResult(result);
         }
     }
 
-    void startActivity(String action, Uri uri, String type, Map<String, String> extras) {
-        Intent i = (uri != null ? new Intent(action, uri) : new Intent(action));
-        
-        if (type != null && uri != null) {
-            i.setDataAndType(uri, type); //Fix the crash problem with android 2.3.6
-        } else {
-            if (type != null) {
-                i.setType(type);
-            }
-        }
-        
-        for (String key : extras.keySet()) {
-            String value = extras.get(key);
-            // If type is text html, the extra text must sent as HTML
-            if (key.equals(Intent.EXTRA_TEXT) && type.equals("text/html")) {
-                i.putExtra(key, Html.fromHtml(value));
-            } else if (key.equals(Intent.EXTRA_STREAM)) {
-                // allowes sharing of images as attachments.
-                // value in this case should be a URI of a file
-				final CordovaResourceApi resourceApi = webView.getResourceApi();
-                i.putExtra(key, resourceApi.remapUri(Uri.parse(value)));
-            } else if (key.equals(Intent.EXTRA_EMAIL)) {
-                // allows to add the email address of the receiver
-                i.putExtra(Intent.EXTRA_EMAIL, new String[] { value });
-            } else {
-                i.putExtra(key, value);
-            }
-        }
-        ((CordovaActivity)this.cordova.getActivity()).startActivity(i);
+
+    private void actionIsEnableGPS(JSONArray args, CallbackContext callbackContext) {
+        callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, isGPSEnabled()));
     }
 
-    void sendBroadcast(String action, Map<String, String> extras) {
-        Intent intent = new Intent();
-        intent.setAction(action);
-        for (String key : extras.keySet()) {
-            String value = extras.get(key);
-            intent.putExtra(key, value);
-        }
-
-        ((CordovaActivity)this.cordova.getActivity()).sendBroadcast(intent);
+    private void actionGotoGPSSettings(JSONArray args, CallbackContext callbackContext) {
+        showAlertDialog();
     }
+
+    private void actionCheckGPS(JSONArray args, CallbackContext callbackContext) {
+        if (!isGPSEnabled()) {
+            showAlertDialog();
+        }
+    }
+
+    private boolean isGPSEnabled() {
+        try {
+            return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        } catch (Exception ex) {
+            return false;
+        }
+    }
+
+    private void showAlertDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Location Services Not Active");
+        builder.setMessage("Please turn on GPS in High Accuracy mode in order to use application.");
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialogInterface, int i) {
+                gotoGPSSettings();
+                closeApplication();
+            }
+        });
+        Dialog alertDialog = builder.create();
+        alertDialog.setCanceledOnTouchOutside(false);
+        alertDialog.show();
+    }
+
+    private void gotoGPSSettings() {
+        cordovaActivity.startActivityForResult(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS), 0);
+    }
+
+    private void closeApplication() {
+        System.exit(0);
+    }
+
 }

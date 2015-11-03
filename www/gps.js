@@ -3,6 +3,22 @@
 
     };
 
+    GPS.prototype.isGPSEnabled = function(success, fail) {
+      return cordova.exec(function(args) {
+          success(args);
+      }, function(args) {
+          fail(args);
+      }, 'GPS', 'isGPSEnabled', []);
+    }
+
+    GPS.prototype.gotoGPSSettings = function(success, fail) {
+      return cordova.exec(function(args) {
+          success(args);
+      }, function(args) {
+          fail(args);
+      }, 'GPS', 'gotoGPSSettings', []);
+    }
+
     GPS.prototype.checkGPS = function(success, fail) {
       return cordova.exec(function(args) {
           success(args);
