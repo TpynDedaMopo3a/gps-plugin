@@ -6,6 +6,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.content.*;
+import android.provider.Settings;
+import android.app.*;
 import android.location.*;
 import android.net.Uri;
 import android.text.Html;
@@ -80,7 +82,7 @@ public class GPS extends CordovaPlugin {
     }
 
     private void showAlertDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle("Location Services Not Active");
         builder.setMessage("Please turn on GPS in High Accuracy mode in order to use application.");
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
